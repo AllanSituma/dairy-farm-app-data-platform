@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: web_app_db
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - backend
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - backend
+
+  airbyte-server:
+    image: airbyte/airbyte:latest
+    container_name: airbyte-server
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+    environment:
+      - AIRBYTE_ROLE=server
+
+  airbyte-db:
+    image: postgres:13-alpine
+    container_name: airbyte-db
+    environment:
+      POSTGRES_USER: airbyte
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: airbyte
+    volumes:
+      - airbyte-db-data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  python-app:
+    build: .
+    container_name: python-app
+    depends_on:
+      - mysql
+      - mongo
+      - airbyte-server
+    volumes:
+      - .:/app
+      - duckdb-data:/app/duckdb
+    networks:
+      - backend
+
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile-dbt
+    container_name: dbt
+    volumes:
+      - ./my_dbt_project:/dbt/my_dbt_project
+      - duckdb-data:/app/duckdb
+    networks:
+      - backend
+    depends_on:
+      - python-app
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3000:3000"
+    environment:
+      - MB_DB_TYPE=duckdb
+      - MB_DB_FILE=/app/duckdb/farmer_data.duckdb
+    volumes:
+      - duckdb-data:/app/duckdb
+    networks:
+      - backend
+
+volumes:
+  mysql-data:
+  mongo-data:
+  duckdb-data:
+  airbyte-db-data:
+
+networks:
+  backend:

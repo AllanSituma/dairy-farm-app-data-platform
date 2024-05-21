@@ -1,0 +1,31 @@
+name: 'my_dbt_project'
+version: '1.0'
+config-version: 2
+
+profile: 'duckdb'
+
+source-paths: ["models"]
+
+models:
+  my_dbt_project:
+    staging:
+      materialized: view
+    marts:
+      core:
+        materialized: table
+
+sources:
+  - name: mysql
+    database: web_app_db
+    schema: public
+    tables:
+      - name: farmers
+      - name: animal_records
+      - name: activity_tracking
+      - name: inventory
+
+  - name: mongo
+    database: farmer_data
+    schema: public
+    tables:
+      - name: user_activity

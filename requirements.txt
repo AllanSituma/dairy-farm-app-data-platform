@@ -1,0 +1,7 @@
+pymongo
+duckdb
+pandas
+mysql-connector-python
+faker
+pyairbyte
+dbt-duckdb

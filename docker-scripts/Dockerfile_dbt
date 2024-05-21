@@ -1,0 +1,14 @@
+# Use the official dbt image from dbt-labs
+FROM dbt-labs/dbt:latest
+
+# Set the working directory in the container
+WORKDIR /dbt
+
+# Copy the dbt project into the container
+COPY my_dbt_project /dbt/my_dbt_project
+
+# Ensure the DuckDB database path is set correctly in profiles.yml
+COPY profiles.yml /root/.dbt/profiles.yml
+
+# Set the default command to run dbt
+CMD ["dbt", "run", "--project-dir", "my_dbt_project"]
